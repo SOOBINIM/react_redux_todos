@@ -1,70 +1,150 @@
-# Getting Started with Create React App
+# 투두리스트 예제 (redux)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 프레젠테이셔널 컴포넌트
+- UI 를 보여주는 컴포넌트
+- 스타일 파일은 scss로 분리하여 사용
 
-## Available Scripts
+## 컨테이너 컴포넌트
+(기존 connect 사용)
+```javascript
+// (기존) connect 사용
+// 해당 컨테이너 컴포넌트의 부모 컴포넌트가 리렌더링될 때
+// 해당 컨테이너 컴포넌트의 props가 바뀌지 않았다면 리렌더링이 자동으로 방지
+// 성능이 최적화 된다.
+import { changeInput, insert, toggle, remove } from "../modules/todos";
+import TodosComponents from "../components/TodosComponents";
+import { connect } from "react-redux";
 
-In the project directory, you can run:
+const TodosContainers = ({
+    input,
+    todos,
+    changeInput,
+    insert,
+    toggle,
+    remove,
+}) => {
+    return (
+        <TodosComponents
+            input={input}
+            todos={todos}
+            onChangeInput={changeInput}
+            onInsert={insert}
+            onToggle={toggle}
+            onRemove={remove} />
+    );
+};
 
-### `yarn start`
+export default connect(
+    ({ todos }) => ({
+        input: todos.input,
+        todos: todos.todos
+    }),
+    {
+        changeInput,
+        insert,
+        toggle,
+        remove
+    },
+)(TodosContainers);
+```
+(connect 대신 useSelector + useDispatch 사용)
+```javascript
+// useSelector + useDispatch 사용
+// useSelector를 사용하여 리덕스 상태를 조회했을 때는 최적화 작업이 자동으로 이루어지지 않음
+// 성능 최적화를 위해 React.memo를 컨테이너 컴포넌트에 사용해주어야 한다. 
+import React from 'react';
+import { changeInput, insert, toggle, remove } from "../modules/todos";
+import TodosComponents from "../components/TodosComponents";
+import { useSelector, useDispatch } from "react-redux";
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+const TodoContainers = () => {
+    const dispatch = useDispatch();
+    const todos = useSelector(state => state.todos.todos);
+    const input = useSelector(state => state.todos.input);
+    return (
+        <TodosComponents
+            todos={todos}
+            input={input}
+            onChangeInput={input => dispatch(changeInput(input))}
+            onInsert={text => dispatch(insert(text))}
+            onToggle={(id) => dispatch(toggle(id))}
+            onRemove={(id) => dispatch(remove(id))}
+        />
+    )
+}
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+export default React.memo(TodoContainers);
+```
+### useSelector
+connect 함수를 사용하지 않고 리덕스의 상태를 조회할 떄 사용한다.
 
-### `yarn test`
+### useDispatch
+액션을 디스패치 해야할 때 사용한다.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
+## 모듈 (디스패치)
+```javascript
+// actions, reducers, constatns 
+// 액션 타입, 액션 생성 함수, 리듀서 함수를 기능별로 파일 하나에 몰아 넣기
+import { createAction, handleActions } from "redux-actions";
 
-### `yarn build`
+// 액션 타입 생성
+const CHANGE_INPUT = 'todos/CHANGE_INPUT';
+const INSERT = 'todos/INSERT';
+const TOGGLE = 'todos/TOGGLE';
+const REMOVE = 'todos/REMOVE';
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+let id = 3;
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+// 액션 생성함수 redux-actions
+export const changeInput = createAction(CHANGE_INPUT, input => input);
+export const insert = createAction(INSERT, text => ({ id: id++, text, done: false }));
+export const toggle = createAction(TOGGLE, id => id);
+export const remove = createAction(REMOVE, id => id);
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+// 초깃값 설정
+const initialState = {
+    input: '',
+    todos: [
+        {
+            id: 1,
+            text: '투두리스트 리덕스 적용',
+            done: true
+        },
+        {
+            id: 2,
+            text: '투두리스트 리덕스 사가 적용',
+            done: false
+        }
+    ]
+};
 
-### `yarn eject`
+// 리듀서 함수
+// handleActions
+// action은 스토어에 저장되어 있는 데이터를 꺼내오는 유일한 방법이다.
+// 액션 생성 함수는 액션에 필요한 추가 데이터를 모두 payload라는 이름으로 사용한다.
+const todos = handleActions(
+    {
+        [CHANGE_INPUT]: (state, action) => ({ ...state, input: action.payload }),
+        [INSERT]: (state, action) => ({ ...state, todos: state.todos.concat(action.payload) }),
+        [TOGGLE]: (state, action) => ({ ...state, todos: state.todos.map(todo => todo.id === action.payload ? { ...todo, done: !todo.done } : todo,), }),
+        [REMOVE]: (state, action) => ({ ...state, todos: state.todos.filter(todo => todo.id !== action.payload), }),
+    }, initialState
+)
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+export default todos;
+```
+### createAcion
+액션에 필요한 추가 데이터는 payload라는 이름을 사용한다. 
+```javascript
+const MY_ACTION = 'sample/MY_ACTION';
+const myAction = createAction(MY_ACTION, text => `${text}!`);
+const action = myAction('hello world');
+/*
+    결과:
+    { type: MY_ACTION, payload: 'hello world!' }
+*/
+```
+### handleActions
+createAction으로 만든 액션 생성 함수는 파라미터로 받아 온 값을 객체 안에 넣을 떄 
+원하는 이름으로 넣는 것이 아닌 `action.id`, `action.todo`와 같이 `action.payload`라는 이름을 공통적으로 넣어 주게 된다. 
