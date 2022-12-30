@@ -50,7 +50,6 @@ const initialState = {
 // 액션 생성 함수는 액션에 필요한 추가 데이터를 모두 payload라는 이름으로 사용한다.
 const todos = handleActions(
     {
-        // [CHANGE_INPUT]: (state, action) => ({ ...state, input: action.payload }),
         [INSERT]: (state, action) => ({ ...state, todos: state.todos.concat(action.payload) }),
         [TOGGLE]: (state, action) => ({ ...state, todos: state.todos.map(todo => todo.id === action.payload ? { ...todo, done: !todo.done } : todo,), }),
         [REMOVE]: (state, action) => ({ ...state, todos: state.todos.filter(todo => todo.id !== action.payload), }),
