@@ -1,31 +1,27 @@
 // import { connect } from "react-redux";
 import React from "react";
-import { changeInput, insert, toggle, remove } from "../modules/todos";
+import { insert, toggle, remove, edit, editDone } from "../modules/todos";
 import TodosComponents from "../components/TodosComponents";
 import { useSelector, useDispatch } from "react-redux";
 
 // 리덕스 스토어와 연동된 컴포넌트를 컨테이너 컴포넌트라 한다.
 // 리덕스 스토어에 접근해서 원하는 상태 값 가져오기
 
-// TodosComponents 
-// todo, inputValue, onChangeInput, onInsert, onToggle, onRemove
-
 const TodoContainers = () => {
     // useSelector로 상태 조회하기
     // connect 함수를 사용하지 않고 리덕스 상태를 조회할 수 있다.
     // 상태 값을 useSelctor로 조회
     const dispatch = useDispatch();
-
     const todos = useSelector(state => state.todos.todos);
-    const input = useSelector(state => state.todos.input);
+
     return (
         <TodosComponents
             todos={todos}
-            input={input}
-            onChangeInput={input => dispatch(changeInput(input))}
             onInsert={text => dispatch(insert(text))}
             onToggle={(id) => dispatch(toggle(id))}
             onRemove={(id) => dispatch(remove(id))}
+            onEdit={(id) => dispatch(edit(id))}
+            onEditDone={(id, text) => dispatch(editDone(id, text))}
         />
     )
 }
