@@ -6,7 +6,7 @@ import { createAction, handleActions } from "redux-actions";
 // import { delay, put, takeEvery, takeLatest } from 'redux-saga/effects'
 
 // 액션 타입 생성
-// const CHANGE_INPUT = 'todos/CHANGE_INPUT';
+const CHANGE_INPUT = 'todos/CHANGE_INPUT';
 const INSERT = 'todos/INSERT';
 const TOGGLE = 'todos/TOGGLE';
 const REMOVE = 'todos/REMOVE';
@@ -18,7 +18,7 @@ const EDITDONE = 'todos/EDITDONE';
 let id = 3;
 
 // 액션 생성함수 redux-actions
-// export const changeInput = createAction(CHANGE_INPUT, (input, name) => (input, name));
+export const changeInput = createAction(CHANGE_INPUT, (input) => (input));
 export const insert = createAction(INSERT, text => ({ id: id++, text, done: false, editMode: false }));
 export const toggle = createAction(TOGGLE, id => id);
 export const remove = createAction(REMOVE, id => id);
@@ -50,6 +50,7 @@ const initialState = {
 // 액션 생성 함수는 액션에 필요한 추가 데이터를 모두 payload라는 이름으로 사용한다.
 const todos = handleActions(
     {
+        [CHANGE_INPUT]: (state, { payload: input }) => ({ ...state, input }),
         [INSERT]: (state, action) => ({ ...state, todos: state.todos.concat(action.payload) }),
         [TOGGLE]: (state, action) => ({ ...state, todos: state.todos.map(todo => todo.id === action.payload ? { ...todo, done: !todo.done } : todo,), }),
         [REMOVE]: (state, action) => ({ ...state, todos: state.todos.filter(todo => todo.id !== action.payload), }),

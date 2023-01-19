@@ -1,6 +1,6 @@
 // import { connect } from "react-redux";
-import React from "react";
-import { insert, toggle, remove, edit, editDone } from "../modules/todos";
+import React, { useCallback } from "react";
+import { changeInput, insert, toggle, remove, edit, editDone } from "../modules/todos";
 import TodosComponents from "../components/TodosComponents";
 import { useSelector, useDispatch } from "react-redux";
 
@@ -13,10 +13,13 @@ const TodoContainers = () => {
     // 상태 값을 useSelctor로 조회
     const dispatch = useDispatch();
     const todos = useSelector(state => state.todos.todos);
+    const input = useSelector(state => state.todos.input)
 
     return (
         <TodosComponents
             todos={todos}
+            input={input}
+            changeInput={useCallback(input => dispatch(changeInput(input)), [dispatch])}
             onInsert={text => dispatch(insert(text))}
             onToggle={(id) => dispatch(toggle(id))}
             onRemove={(id) => dispatch(remove(id))}
